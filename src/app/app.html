@@ -1,0 +1,293 @@
+<div class="app-shell">
+  <main>
+    <section class="programme" id="programme" aria-labelledby="programme-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="programme-title">Pick your next story</h2>
+        </div>
+        <span class="live-note"><i aria-hidden="true"></i> Simulated live catalogue</span>
+      </div>
+
+      <div class="catalog-controls">
+        <label class="search">
+          <span class="sr-only">Search movies</span>
+          <span aria-hidden="true">⌕</span>
+          <input
+            type="search"
+            placeholder="Search by title or mood"
+            [value]="query()"
+            (input)="updateFilter($event)"
+          />
+        </label>
+        <button type="button" class="reload" (click)="reload()">Reload</button>
+      </div>
+
+      <div class="genre-list" aria-label="Filter by genre">
+        @for (item of genres; track item) {
+          <button
+            type="button"
+            [class.active]="genre() === item"
+            [attr.aria-pressed]="genre() === item"
+            (click)="selectGenre(item)"
+          >
+            {{ item }}
+          </button>
+        }
+      </div>
+
+      <div class="status-line" aria-live="polite">
+        <span
+          class="status-dot"
+          [class.loading]="moviesResource.isLoading()"
+          aria-hidden="true"
+        ></span>
+        <strong>{{ catalogStore.statusMessage() }}</strong>
+        <span class="status-code">{{ resourceStatus() }}</span>
+      </div>
+
+      <div class="movie-grid" [class.muted]="moviesResource.isLoading()">
+        @for (movie of visibleMovies(); track movie.id) {
+          <article class="movie-card">
+            <div class="poster">
+              <img
+                [src]="movie.imageUrl"
+                [alt]="movie.imageAlt"
+                width="480"
+                height="640"
+                loading="lazy"
+              />
+              <span>{{ movie.rating }} ★</span>
+            </div>
+            <div class="card-copy">
+              <p>{{ movie.genre }} · {{ movie.year }}</p>
+              <h3>{{ movie.title }}</h3>
+              <div class="card-footer">
+                <span>{{ movie.runtime }}</span>
+                <button type="button" (click)="selectMovie(movie)">View details →</button>
+              </div>
+            </div>
+          </article>
+        } @empty {
+          <div class="empty-state">
+            <span aria-hidden="true">◌</span>
+            <h3>No films on this screen</h3>
+            <p>Try another filter, or recover the simulated connection.</p>
+          </div>
+        }
+      </div>
+
+      <div class="error-demo">
+        <div>
+          <p class="eyebrow">Try the resilient state</p>
+          <h3>What happens when the projector fails?</h3>
+          <p>
+            NgRx keeps the screen safe with an empty fallback while the real error remains
+            available.
+          </p>
+        </div>
+        <div class="button-row">
+          <button type="button" class="danger" (click)="simulateError()">Simulate error</button>
+          <button type="button" (click)="recover()">Recover catalogue</button>
+        </div>
+      </div>
+    </section>
+
+    @if (catalogStore.selectedMovie(); as selectedMovie) {
+      <section
+        id="movie-details"
+        class="movie-details"
+        aria-labelledby="details-title"
+        aria-live="polite"
+        tabindex="-1"
+      >
+        <img
+          class="detail-poster"
+          [src]="selectedMovie.imageUrl"
+          [alt]="selectedMovie.imageAlt"
+          width="360"
+          height="480"
+        />
+        <div class="detail-copy">
+          <p class="eyebrow">Selected film · Dynamic deep signals</p>
+          <h2 id="details-title">{{ catalogStore.selectedTitle() }}</h2>
+          <p class="detail-meta">
+            {{ catalogStore.selectedGenre() }} · {{ selectedMovie.year }} ·
+            {{ selectedMovie.runtime }} · {{ selectedMovie.rating }} ★
+          </p>
+          <p class="synopsis">{{ selectedMovie.synopsis }}</p>
+          <p class="result">{{ catalogStore.resultText() }}</p>
+          <div class="detail-actions">
+            <button type="button" class="danger" (click)="catalogStore.showSelectionError()">
+              Switch result branch
+            </button>
+            <button type="button" (click)="catalogStore.clearSelection()">Clear selection</button>
+          </div>
+        </div>
+      </section>
+    }
+
+    <section class="under-the-hood" id="under-the-hood" aria-labelledby="ngrx-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Under the hood</p>
+          <h2 id="ngrx-title">A small app powered by NgRx 22</h2>
+        </div>
+        <span class="experimental">Resource extensions are experimental</span>
+      </div>
+      <div class="feature-grid">
+        <button
+          type="button"
+          class="feature-card"
+          [class.active]="selectedCodeExampleId() === 'resources'"
+          [attr.aria-pressed]="selectedCodeExampleId() === 'resources'"
+          (click)="selectCodeExample('resources')"
+        >
+          <span class="feature-number">01</span>
+          <span class="feature-title">Smoother resources</span>
+          <span class="feature-description">
+            The previous programme stays visible during reloads, and errors get a safe fallback.
+          </span>
+          <code>extendResource()</code>
+        </button>
+        <button
+          type="button"
+          class="feature-card"
+          [class.active]="selectedCodeExampleId() === 'deep-signals'"
+          [attr.aria-pressed]="selectedCodeExampleId() === 'deep-signals'"
+          (click)="selectCodeExample('deep-signals')"
+        >
+          <span class="feature-number">02</span>
+          <span class="feature-title">Dynamic deep signals</span>
+          <span class="feature-description">
+            <code>Movie | null</code> and result unions keep their strongly typed nested signals.
+          </span>
+          <code>store.selectedMovie.title()</code>
+        </button>
+        <button
+          type="button"
+          class="feature-card"
+          [class.active]="selectedCodeExampleId() === 'feature-types'"
+          [attr.aria-pressed]="selectedCodeExampleId() === 'feature-types'"
+          (click)="selectCodeExample('feature-types')"
+        >
+          <span class="feature-number">03</span>
+          <span class="feature-title">Reusable feature types</span>
+          <span class="feature-description">
+            The status feature shares its full contract without repeating state or methods.
+          </span>
+          <code>SignalStoreFeatureType</code>
+        </button>
+        <button
+          type="button"
+          class="feature-card"
+          [class.active]="selectedCodeExampleId() === 'devtools'"
+          [attr.aria-pressed]="selectedCodeExampleId() === 'devtools'"
+          (click)="selectCodeExample('devtools')"
+        >
+          <span class="feature-number">04</span>
+          <span class="feature-title">Better DevTools</span>
+          <span class="feature-description">
+            The action group is registered and available from the Redux DevTools dispatcher.
+          </span>
+          <code>actionCreators</code>
+        </button>
+      </div>
+      <app-code-block [code]="selectedCodeExample().code" [label]="selectedCodeExample().label" />
+    </section>
+
+    <section class="technical-sources" id="sources" aria-labelledby="sources-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Verified references</p>
+          <h2 id="sources-title">Read the primary sources</h2>
+        </div>
+        <span>Checked 26 October 2026</span>
+      </div>
+      <p>
+        The demo copy is a teaching summary. These official guides, versioned sources, and release
+        commits are the authority for the APIs and version claims shown above.
+      </p>
+      <ul>
+        <li>
+          <a href="https://ngrx.io/guide/signals/resource-extensions">Resource Extensions guide</a>
+          <span>Built-ins, ordering, providers, and experimental status</span>
+        </li>
+        <li>
+          <a href="https://angular.dev/guide/signals/resource">Angular Resource guide</a>
+          <span>Default loading, error, value, and cancellation behavior</span>
+        </li>
+        <li>
+          <a href="https://ngrx.io/guide/migration/v22">NgRx v22 migration guide</a>
+          <span>Requirements, dynamic deep signals, and breaking changes</span>
+        </li>
+        <li>
+          <a href="https://github.com/ngrx/platform/commit/319d3ee"
+            ><code>SignalStoreFeatureType</code> change</a
+          >
+          <span>The public feature-contract utility used in this app</span>
+        </li>
+        <li>
+          <a href="https://github.com/ngrx/platform/commit/69dbe47"
+            ><code>actionCreators</code> DevTools change</a
+          >
+          <span>The Dispatcher configuration registered by ReelNight</span>
+        </li>
+        <li>
+          <a href="https://github.com/ngrx/platform/blob/22.0.1/CHANGELOG.md"
+            >NgRx 22.0.1 changelog snapshot</a
+          >
+          <span>Versioned release history rather than an unpinned latest page</span>
+        </li>
+        <li>
+          <a href="https://angular.dev/guide/zoneless">Angular zoneless guide</a>
+          <span>Zoneless change detection is Angular functionality, not an NgRx 22 feature</span>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div>
+      <a class="brand" href="#programme"
+        ><span class="brand-mark" aria-hidden="true">R</span> REELNIGHT</a
+      >
+      <p>A fictional cinema demo built with zoneless Angular 22 and NgRx 22.</p>
+      <a href="#sources">Technical sources</a>
+    </div>
+    <details>
+      <summary>Image credits</summary>
+      <ul>
+        <li>
+          <a [href]="featuredMovie.creditUrl">Afterlight — {{ featuredMovie.creditLabel }}</a>
+        </li>
+        <li>
+          <a href="https://commons.wikimedia.org/wiki/File:Climbing_the_Merzouga_Dunes.jpg"
+            >The Last Horizon — Mustang Joe · CC0</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://commons.wikimedia.org/wiki/File:A_Man_on_the_Moon,_AS11-40-5903_(cropped).jpg"
+            >One Small Step — Neil A. Armstrong / NASA · Public domain</a
+          >
+        </li>
+        <li>
+          <a href="https://commons.wikimedia.org/wiki/File:Jersey_City_night_skyline.jpg"
+            >Midnight District — Alfred Twu · CC0</a
+          >
+        </li>
+        <li>
+          <a href="https://commons.wikimedia.org/wiki/File:Dense_forest_under_fog_(Unsplash).jpg"
+            >Into the Quiet — Nathan Anderson · CC0</a
+          >
+        </li>
+        <li>
+          <a
+            href="https://commons.wikimedia.org/wiki/File:Sun_Fisherman_Lighthouse_(212319699).jpeg"
+            >Tides of Home — João Cautela · CC0</a
+          >
+        </li>
+      </ul>
+    </details>
+  </footer>
+</div>
